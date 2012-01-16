@@ -54,7 +54,6 @@ pos = cond(life < L0, PF0(...), pos + vel*dt )
 which in turn looks life we could optimize this by:
 
 c = life < L0;
-
 life = cond( c, LF0(...), life - dt )
 vel = cond( c, VF0(...), VF1(...) )
 pos = cond( c, PF0(...), pos + vel*dt )
@@ -63,5 +62,20 @@ what's left is a cond() array operation. it could be either
 (t*F1+(1-t)*F2) or (c ? F1 : F2) depending on complexity of F1 and F2. if
 they are simple operations it could be cheaper to do the arithmetic version.
 
+
+correction: cond(c,e1,e2) actually is c.select(e1, e2), so:
+
+c = life < L0;
+life = c.select( LF0(...), life - dt )
+vel = c.select( VF0(...), VF1(...) )
+pos = c.select( PF0(...), pos + vel*dt )
+
+except in case of vel/pos we need c.replicate<1,3>()...
+
+maybe this could be optimized into a single loop by storing
+all parameters in a single matrix and doing a complicated formula, but
+for now just do (life < L0) and stuff.
+
+life = (life < L0).select( LF0(...), life - dt )
 
 
