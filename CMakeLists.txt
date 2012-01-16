@@ -44,6 +44,8 @@ REQUIRE_HEADER(cinder_INCLUDE cinder/app/AppBasic.h)
 
 FIND_PATH(eigen_INCLUDE Eigen/Dense PATH_SUFFIXES eigen3)
 REQUIRE_HEADER(eigen_INCLUDE Eigen/Dense)
+# necessary for plugins to work
+INCLUDE_DIRECTORIES(${CMAKE_SOURCE_DIR})
 
 FIND_PACKAGE(Boost REQUIRED)
 INCLUDE_DIRECTORIES(${Boost_INCLUDE_DIRS})

@@ -2,30 +2,17 @@
 #include <cinder/Camera.h>
 #include <cinder/Arcball.h>
 
+#include "RandomUtil.hpp"
+#define EIGEN_ARRAYBASE_PLUGIN <ArrayBasePlugin.hpp>
 #include <Eigen/Core>
 
-#include <boost/random/mersenne_twister.hpp>
-#include <boost/random/normal_distribution.hpp>
-#include <boost/random/uniform_01.hpp>
-#include <boost/random/variate_generator.hpp>
+#include "RandomUtilEigen.hpp"
 
 using namespace ci;
 using namespace ci::app;
 
 using Eigen::ArrayX3d;
 using Eigen::ArrayXd;
-
-double normal_rnd(double mean = 0.0, double sigma = 1.0) {
-    static boost::variate_generator< boost::mt19937, boost::normal_distribution<> >
-        r(boost::mt19937(time(0)), boost::normal_distribution<>());
-    return mean + sigma * r();
-}
-
-double u01_rnd(double min=0.0, double max=1.0) {
-    static boost::variate_generator< boost::mt19937, boost::uniform_01<> >
-        r(boost::mt19937(time(0)), boost::uniform_01<>());
-    return min + r() * (max-min);
-}
 
 struct ParticleSystem {
     typedef std::vector<double> Gene;
@@ -41,21 +28,12 @@ struct ParticleSystem {
 
     explicit ParticleSystem(int size, const Gene& gene)
     {
-        life = ArrayXd::Zero(size);
-        pos = ArrayX3d::Zero(size, 3);
-        vel = ArrayX3d::Zero(size, 3);
-
         double life_m = allele(gene,0,5.0), life_sd = allele(gene,1,2.5),
                pos_m = 0, pos_sd = allele(gene,2,1.0),
                vel_m = 0, vel_sd = allele(gene,3,1.0);
-
-        for(int i = 0; i<size; i++) {
-            life[i] = normal_rnd(life_m,life_sd);
-            for(int j=0; j<3; j++) {
-                pos(i,j) = normal_rnd(pos_m,pos_sd);
-                vel(i,j) = normal_rnd(vel_m,vel_sd);
-            }
-        }
+        life = ArrayXd::NormalRnd(size, life_m, life_sd);
+        pos = ArrayX3d::NormalRnd(size, 3, pos_m,pos_sd);
+        vel = ArrayX3d::NormalRnd(size, 3, vel_m,vel_sd);
     }
 
     void advance(double dt)
