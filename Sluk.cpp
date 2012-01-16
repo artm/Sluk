@@ -62,28 +62,33 @@ class Sluk : public AppBasic {
     void genesis() {
         ParticleSystem::Gene gene;
 
-        gene.push_back( u01_rnd(1,4) );
-        gene.push_back( u01_rnd(.5,3) );
-        gene.push_back( u01_rnd(1,3) );
-        gene.push_back( u01_rnd(1,3) );
+        gene.push_back( u01_rnd(.1,4) );
+        gene.push_back( u01_rnd(.1,5) );
+        gene.push_back( u01_rnd(.1,3) );
+        gene.push_back( u01_rnd(.1,3) );
 
-        m_partsys = ParticleSystem(50000, gene);
+        m_partsys = ParticleSystem(15000, gene);
     }
 
     void setup() {
         genesis();
-        m_cam.setPerspective( 90.0f, getWindowAspectRatio(), 0.01f, 50.0f );
-        m_cam.lookAt(Vec3f(0,0,5), Vec3f(0,0,0));
+        m_cam.setPerspective( 90.0f, getWindowAspectRatio(), 0.01f, 500.0f );
+        m_cam.lookAt(Vec3f(0,0,-10), Vec3f(0,0,0));
 
-        GLfloat fogColor[4]= {1,1,1,1};
+        GLfloat fogColor[4]= {0,0,0,1};
         glFogi(GL_FOG_MODE, GL_EXP);
         glFogfv(GL_FOG_COLOR, fogColor);
-        glFogf(GL_FOG_DENSITY, 3e-2);
+        glFogf(GL_FOG_DENSITY, 7e-3);
         glEnable(GL_FOG);
 
-        glPointSize(5);
-        float point_params[] = {1,0,1};
+        float psize = 20;
+        glPointSize(psize);
+        float point_params[] = {1,0,.5};
+        glPointParameterf(GL_POINT_SIZE_MIN, 1.0f);
+        glPointParameterf(GL_POINT_SIZE_MAX, psize);
         glPointParameterfv(GL_POINT_DISTANCE_ATTENUATION, point_params);
+
+        glBlendFunc(GL_ONE, GL_ONE);
     }
     void update() {
         m_timer.stop();
@@ -96,14 +101,17 @@ class Sluk : public AppBasic {
     }
     void draw() {
         gl::setMatrices( m_cam );
-        gl::clear(Color(1,1,1), true);
-        gl::color(0,0,0);
+        gl::clear(Color(0,0,0), true);
+        gl::color(0.1,0.1,0.1);
 
         gl::rotate( m_arcball.getQuat() );
+
+        glEnable(GL_BLEND);
         glEnableClientState(GL_VERTEX_ARRAY);
         glVertexPointer( 3, GL_DOUBLE, 0, m_partsys.pos.data() );
         glDrawArrays(GL_POINTS, 0, m_partsys.pos.rows());
         glDisableClientState(GL_VERTEX_ARRAY);
+        glDisable(GL_BLEND);
     }
 
     void resize(ResizeEvent e) {
