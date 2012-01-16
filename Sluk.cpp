@@ -20,6 +20,8 @@ struct ParticleSystem {
     ArrayX3d pos, vel;
     ArrayXd life;
 
+    double life_m, life_sd, pos_sd, vel_sd;
+
     ParticleSystem() {}
 
     double allele(Gene gene, int index, double def = 0.0) {
@@ -28,19 +30,26 @@ struct ParticleSystem {
 
     explicit ParticleSystem(int size, const Gene& gene)
     {
-        double life_m = allele(gene,0,5.0), life_sd = allele(gene,1,2.5),
-               pos_m = 0, pos_sd = allele(gene,2,1.0),
-               vel_m = 0, vel_sd = allele(gene,3,1.0);
-        life = ArrayXd::NormalRnd(size, life_m, life_sd);
-        pos = ArrayX3d::NormalRnd(size, 3, pos_m,pos_sd);
-        vel = ArrayX3d::NormalRnd(size, 3, vel_m,vel_sd);
+        life_m = allele(gene,0,5.0);
+        life_sd = allele(gene,1,2.5);
+        pos_sd = allele(gene,2,1.0);
+        vel_sd = allele(gene,3,1.0);
+
+        life = ArrayXd::Zero(size);
+        pos = ArrayX3d::Zero(size,3);
+        vel = ArrayX3d::Zero(size,3);
     }
 
     void advance(double dt)
     {
-        // trust the compiler to optimize this
-        pos += vel * (dt * (life>0.0).cast<double>()).replicate<1,3>();
-        life -= dt;
+        int size = life.size();
+
+        vel = (life > 0.0).replicate<1,3>()
+            .select( vel, ArrayX3d::NormalRnd(size, 3, 0.0, vel_sd) );
+        pos = (life > 0.0).replicate<1,3>()
+            .select( pos + vel * dt, ArrayX3d::NormalRnd(size, 3, 0.0, pos_sd) );
+        life = (life > 0.0)
+            .select( life - dt, ArrayXd::NormalRnd(size, life_m, life_sd) );
     }
 };
 
@@ -82,7 +91,7 @@ class Sluk : public AppBasic {
         m_timer.start();
 
         m_partsys.advance(dt);
-        if ((m_partsys.life > 0).count() < 1)
+        if ((m_partsys.life < 0).all())
             genesis();
     }
     void draw() {
@@ -111,6 +120,15 @@ class Sluk : public AppBasic {
     void mouseDrag( MouseEvent e )
     {
         m_arcball.mouseDrag( e.getPos() );
+    }
+
+    void keyDown( KeyEvent e )
+    {
+        switch(e.getChar()) {
+            case ' ':
+                genesis();
+                break;
+        }
     }
 
 };
