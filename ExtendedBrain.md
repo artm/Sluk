@@ -1,5 +1,10 @@
 Thinking aloud
 
+# genes to parameters
+
+genes should be simply sequences of numbers, gene interpreter should
+map them to (a) parameres and (b) some parameter range.
+
 # virtual machine
 
 1. what sort of operations are possible? how can they be encoded by a
