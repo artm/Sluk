@@ -19,7 +19,7 @@ using Eigen::Array3d;
 using Eigen::ArrayXd;
 
 struct ParticleSystem {
-    typedef ArrayXd Gene;
+    typedef std::list<double> Gene;
 
     ArrayX3d pos, vel;
     ArrayXd life;
@@ -29,21 +29,25 @@ struct ParticleSystem {
     ParticleSystem() {}
 
     double allele(
-            Gene gene, int index,
+            Gene gene,
             double def = 0.0,
             double min = -1.0,
             double max = 1.0) {
-        return (gene.size() > index)
-            ? min + 0.5*(gene[index]+1.0)*(max-min)
-            : def;
+
+        if (gene.size() > 0) {
+             def = min + gene.front()*(max-min);
+             gene.pop_front();
+        }
+
+        return def;
     }
 
     explicit ParticleSystem(int size, const Gene& gene)
     {
-        life_m = allele(gene,0,5.0,.05,1);
-        life_sd = allele(gene,1,2.5,.1,3);
-        pos_sd = allele(gene,2,1,0.01,1);
-        vel_sd = allele(gene,3,1.0,.1,10);
+        life_m  = allele(gene, 5.0, .05,  1);
+        life_sd = allele(gene, 2.5, .10,  3);
+        pos_sd  = allele(gene, 1.0, .01,  1);
+        vel_sd  = allele(gene, 1.0, .10, 10);
 
         life = ArrayXd::Zero(size);
         pos = ArrayX3d::Zero(size,3);
@@ -79,10 +83,15 @@ class Sluk : public AppBasic {
     }
 
     void genesis() {
-        m_partsys = ParticleSystem(15000, ArrayXd::Random(4));
+        ParticleSystem::Gene gene;
+        for(int i=0; i<4; i++)
+            gene.push_back( u01_rnd() );
+        m_partsys = ParticleSystem(5000, gene);
     }
 
     void setup() {
+        srand(time(0));
+
         InterfaceGl::load( std::string(getenv("HOME")) + "/.slukrc" );
         m_gui = InterfaceGl( "Current specimen", Vec2i( 250, 250 ) );
         m_gui.addPersistentSizeAndPosition();
