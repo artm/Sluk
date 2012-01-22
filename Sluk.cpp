@@ -25,6 +25,7 @@ struct ParticleSystem {
     ArrayXd life;
 
     float life_m, life_sd, pos_sd, vel_sd;
+    float afterlife,noise;
 
     ParticleSystem() {}
 
@@ -49,8 +50,10 @@ struct ParticleSystem {
         life_sd = allele(gene, 2.5, .10,  3);
         pos_sd  = allele(gene, 1.0, .01,  1);
         vel_sd  = allele(gene, 1.0, .10, 10);
+        afterlife = - allele(gene, 5.0, 0, 10);
+        noise = std::max( 0.0, allele(gene, 0.0, -5.0, 10.0));
 
-        life = ArrayXd::Zero(size);
+        life = ArrayXd::Constant(size, afterlife);
         pos = ArrayX3d::Zero(size,3);
         vel = ArrayX3d::Zero(size,3);
     }
@@ -60,10 +63,10 @@ struct ParticleSystem {
         int size = life.size();
 
         for(int i = 0; i<size; i++) {
+            life[i] -= dt;
             if (life[i] > 0.0) {
-                life[i] -= dt;
-                pos.row(i) += dt * vel.row(i);
-            } else {
+                pos.row(i) += dt * (vel.row(i) + Eigen::Array<double,1,3>::NormalRnd(0.0,noise));
+            } else if (life[i] < afterlife) {
                 life[i] = normal_rnd(life_m, life_sd);
                 pos.row(i) = Array3d::NormalRnd(0.0,pos_sd);
                 vel.row(i) = Array3d::NormalRnd(0.0,vel_sd);
@@ -100,6 +103,8 @@ class Sluk : public AppBasic {
         m_gui.addParam("Life sd", &m_partsys.life_sd);
         m_gui.addParam("Pos sd", &m_partsys.pos_sd);
         m_gui.addParam("Velocity sd", &m_partsys.vel_sd);
+        m_gui.addParam("Afterlife", &m_partsys.afterlife);
+        m_gui.addParam("Noise", &m_partsys.noise);
 
         genesis();
         m_cam.setPerspective( 90.0f, getWindowAspectRatio(), 0.01f, 500.0f );
@@ -129,7 +134,7 @@ class Sluk : public AppBasic {
     void draw() {
         gl::setMatrices( m_cam );
         gl::clear(Color(0,0,0), true);
-        gl::color(0.1,0.1,0.1);
+        gl::color(0.3,0.35,0.3);
 
         gl::rotate( m_arcball.getQuat() );
 
