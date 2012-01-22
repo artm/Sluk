@@ -29,7 +29,7 @@ struct ParticleSystem {
     ParticleSystem() {}
 
     double allele(
-            Gene gene,
+            Gene& gene,
             double def = 0.0,
             double min = -1.0,
             double max = 1.0) {
@@ -42,9 +42,10 @@ struct ParticleSystem {
         return def;
     }
 
-    explicit ParticleSystem(int size, const Gene& gene)
+    explicit ParticleSystem(int size, const Gene& _gene)
     {
-        life_m  = allele(gene, 5.0, .05,  1);
+        Gene gene = _gene;
+        life_m  = allele(gene, 5.0, 3.0,  1);
         life_sd = allele(gene, 2.5, .10,  3);
         pos_sd  = allele(gene, 1.0, .01,  1);
         vel_sd  = allele(gene, 1.0, .10, 10);
@@ -84,7 +85,7 @@ class Sluk : public AppBasic {
 
     void genesis() {
         ParticleSystem::Gene gene;
-        for(int i=0; i<4; i++)
+        for(int i=0; i<20; i++)
             gene.push_back( u01_rnd() );
         m_partsys = ParticleSystem(5000, gene);
     }
